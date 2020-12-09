@@ -1,17 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import moment from 'moment'
 import { makeStyles, 
         Paper, 
         Grid, 
         TextField, 
         Button,
-        Table,
-        TableBody,
-        TableCell,
-        TableContainer,
-        TableHead,
-        TableRow,
-        TablePagination,
       } from "@material-ui/core";
 import SearchIcon from '@material-ui/icons/Search';
 import AppBar from "@material-ui/core/AppBar";
@@ -19,6 +11,8 @@ import Toolbar from "@material-ui/core/Toolbar";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios'
+
+import Circle from './Circle'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -65,54 +59,14 @@ const useStyles = makeStyles((theme) => ({
   }
   
 }));
-let rows = [];
 
+
+let row = []
 function App() {
-  const classes = useStyles();
+  const classes = useStyles()
   const [CodigoEmp, setCodigoEmp] = useState()
   const [Loading, setLoading] = useState(false)
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
-
-  const columns = [
-    {
-      id: "CodigoEmp",
-      label: "Codigo",
-      minWidth: "100",
-      align: "left",
-      format: (value) => value
-    },
-    {
-      id: "Nombres",
-      label: "Nombre",
-      minWidth: "170",
-      align: "left",
-      format: (value) => value.toLocaleString(),
-    },
-    {
-      id: "DesCUniOrga",
-      label: "Departamento",
-      minWidth: "170",
-      align: "left",
-      format: (value) => value.toLocaleString(),
-    },
-    {
-      id: "Hora",
-      label: "Hora",
-      minWidth: "170",
-      align: "left",
-      format: (value) => moment(value.toLocaleString()).format('LT') ,
-    }
-  ]
+  const [Rows, SetRows] = useState([])
   const handlerOnclick = () => {
     axios.get(`http://10.82.33.72:8000/api/getEmployee?User=${CodigoEmp}`, {
       headers: {
@@ -181,15 +135,14 @@ function App() {
           'Content-Type': 'application/json'
       }
   }).then((response) =>{
-    response.data.forEach(e => {
-      e.Hora = e.Fecha.split('T')[1].toString().substring(0,8)
+    row = response.data
+    let x = row.map(e => {
+      return (
+        <Circle key={e.Label} Label={e.Label} Value={e.Cant}/>
+      )
     })
-    rows = response.data
-    if(rowsPerPage === 100) {
-      setRowsPerPage(101)
-    } else {
-      setRowsPerPage(100)
-    }
+    SetRows(x)
+
   }).catch((err) => {
         toast.error(`Ha ocurrido un error al cargar los registros`, {
           position: "top-right",
@@ -202,7 +155,6 @@ function App() {
           });
   }) 
   },[Loading])
-
 
   return (
     <>
@@ -247,56 +199,15 @@ function App() {
         <ToastContainer/>
       </div>
       <br/>
-      <div>
-      <Paper className={classes.root}>
-      <TableContainer className={classes.container}>
-        <Table stickyHeader aria-label="sticky table">
-          <TableHead>
-            <TableRow>
-              {columns.map((column) => (
-                <TableCell
-                  key={column.id}
-                  id={column.id}
-                  style={{ minWidth: column.minWidth }}
-                >
-                  {column.label}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row) => {
-                return (
-                  <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
-                    {columns.map((column) => {
-                      const value = row[column.id];
-                      return (
-                        <TableCell key={column.id} align={column.align}>
-                          {column.format && typeof value === "number"
-                            ? column.format(value)
-                            : value}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                );
-              })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <TablePagination
-        rowsPerPageOptions={[100,101,200]}
-        component="div"
-        count={rows.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onChangePage={handleChangePage}
-        onChangeRowsPerPage={handleChangeRowsPerPage}
-      />
-    </Paper>
-      </div>
+      <Grid container
+              spacing={1}
+              direction="row"
+              justify="center"
+              alignItems="center"
+              className={classes.root}>
+                {Rows}
+              </Grid>
+      
     </>
   );
 }
